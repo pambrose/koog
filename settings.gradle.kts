@@ -21,6 +21,7 @@ include(":agents:agents-mcp")
 include(":agents:agents-test")
 include(":agents:agents-tools")
 include(":agents:agents-utils")
+include(":agents:agents-tools-files")
 
 include(":examples")
 
