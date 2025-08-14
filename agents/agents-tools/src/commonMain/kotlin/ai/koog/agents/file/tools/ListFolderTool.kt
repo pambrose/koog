@@ -1,8 +1,7 @@
 package ai.koog.agents.file.tools
 
 import ai.koog.agents.core.tools.*
-import ai.koog.agents.file.tools.internal.GlobPattern
-import ai.koog.agents.file.tools.internal.listDirectory
+import ai.koog.agents.file.tools.model.filter.GlobPattern
 import ai.koog.agents.file.tools.model.FileSystemEntry
 import ai.koog.agents.file.tools.render.directory
 import ai.koog.prompt.markdown.markdown

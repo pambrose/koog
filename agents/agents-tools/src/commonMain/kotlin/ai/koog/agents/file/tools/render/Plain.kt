@@ -1,8 +1,8 @@
 package ai.koog.agents.file.tools.render
 
+import ai.koog.agents.file.tools.buildFileMetadata
 import ai.koog.agents.file.tools.model.FileSystemEntry
-import ai.koog.agents.file.tools.internal.buildFileMetadata
-import ai.koog.agents.file.tools.internal.trimFilePathSeparator
+import ai.koog.agents.file.tools.trimFilePathSeparator
 import ai.koog.prompt.text.TextContentBuilder
 
 public fun TextContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
