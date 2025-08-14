@@ -5,17 +5,6 @@ import ai.koog.agents.file.tools.model.filter.GlobPattern
 import ai.koog.rag.base.files.FileMetadata
 import ai.koog.rag.base.files.FileSystemProvider
 
-internal fun String.trimFilePathSeparator() = trimStart('/', '\\')
-
-/**
- * Builds a list of metadata strings for a file, including content type, size, and hidden status.
- */
-internal fun buildFileMetadata(file: FileSystemEntry.File): List<String> = buildList {
-    if (file.contentType != FileMetadata.FileContentType.Text) add(file.contentType.display)
-    add(file.size.joinToString(", ") { it.display() })
-    if (file.hidden) add("hidden")
-}
-
 internal suspend fun<Path> listDirectory(
     path: Path,
     fs: FileSystemProvider.ReadOnly<Path>,

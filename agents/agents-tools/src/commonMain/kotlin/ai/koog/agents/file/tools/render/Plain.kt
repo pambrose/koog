@@ -1,18 +1,16 @@
 package ai.koog.agents.file.tools.render
 
-import ai.koog.agents.file.tools.buildFileMetadata
 import ai.koog.agents.file.tools.model.FileSystemEntry
-import ai.koog.agents.file.tools.trimFilePathSeparator
 import ai.koog.prompt.text.TextContentBuilder
 
-public fun TextContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
+internal fun TextContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
     when (entry) {
         is FileSystemEntry.File -> file(entry, parent)
         is FileSystemEntry.Folder -> directory(entry, parent)
     }
 }
 
-public fun TextContentBuilder.directory(directory: FileSystemEntry.Folder, parent: FileSystemEntry? = null) {
+internal fun TextContentBuilder.directory(directory: FileSystemEntry.Folder, parent: FileSystemEntry? = null) {
     val entries = directory.entries
     val single = entries?.singleOrNull()
     if (single != null) {

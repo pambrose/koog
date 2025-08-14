@@ -1,18 +1,16 @@
 package ai.koog.agents.file.tools.render
 
-import ai.koog.agents.file.tools.buildFileMetadata
 import ai.koog.agents.file.tools.model.FileSystemEntry
-import ai.koog.agents.file.tools.trimFilePathSeparator
 import ai.koog.prompt.markdown.MarkdownContentBuilder
 
-public fun MarkdownContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
+internal fun MarkdownContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
     when (entry) {
         is FileSystemEntry.File -> file(entry, parent)
         is FileSystemEntry.Folder -> directory(entry, parent)
     }
 }
 
-public fun MarkdownContentBuilder.directory(directory: FileSystemEntry.Folder, parent: FileSystemEntry? = null) {
+internal fun MarkdownContentBuilder.directory(directory: FileSystemEntry.Folder, parent: FileSystemEntry? = null) {
     val entries = directory.entries
     val single = entries?.singleOrNull()
     if (single != null) {
@@ -51,7 +49,7 @@ public fun MarkdownContentBuilder.directory(directory: FileSystemEntry.Folder, p
 }
 
 /** Renders file content (helper used by top-level and list item rendering). */
-public  fun MarkdownContentBuilder.file(file: FileSystemEntry.File, parent: FileSystemEntry? = null) {
+internal  fun MarkdownContentBuilder.file(file: FileSystemEntry.File, parent: FileSystemEntry? = null) {
     line {
         val displayPath = if (parent != null) {
             // Remove the root path prefix and show only the relative part

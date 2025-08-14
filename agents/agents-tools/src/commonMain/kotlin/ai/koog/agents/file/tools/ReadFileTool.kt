@@ -46,8 +46,8 @@ public class ReadFileTool<Path>(
 	private val fs: FileSystemProvider.ReadOnly<Path>,
 ) : Tool<ReadFileTool.Args, ReadFileTool.Result>() {
 
-	private companion object {
-		val descriptor: ToolDescriptor = ToolDescriptor(
+	public companion object {
+		public val descriptor: ToolDescriptor = ToolDescriptor(
 			name = "read-file",
 			description = markdown {
 				+"Reads a text file at a given absolute path (e.g., '/home/user/file.txt')."

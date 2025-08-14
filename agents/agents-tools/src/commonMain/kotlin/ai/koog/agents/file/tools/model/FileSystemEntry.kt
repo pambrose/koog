@@ -29,7 +29,7 @@ public sealed interface FileSystemEntry {
                         path = fs.toAbsolutePathString(path),
                         hidden = metadata.hidden,
                         contentType = fs.getFileContentType(path),
-                        size = FileSize.Companion.of(path, fs),
+                        size = FileSize.of(path, fs),
                     )
                 }
 
@@ -81,7 +81,7 @@ public sealed interface FileSystemEntry {
                     path = fs.toAbsolutePathString(path),
                     hidden = metadata.hidden,
                     contentType = fs.getFileContentType(path),
-                    size = FileSize.Companion.of(path, fs),
+                    size = FileSize.of(path, fs),
                     content = content,
                 )
             }

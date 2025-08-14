@@ -3,14 +3,7 @@ package ai.koog.agents.file.tools.render
 import ai.koog.agents.file.tools.model.FileSystemEntry
 import ai.koog.prompt.xml.XmlContentBuilder
 
-public fun XmlContentBuilder.entry(entry: FileSystemEntry) {
-    when (entry) {
-        is FileSystemEntry.File -> file(entry)
-        is FileSystemEntry.Folder -> directory(entry)
-    }
-}
-
-public fun XmlContentBuilder.file(file: FileSystemEntry.File) {
+internal fun XmlContentBuilder.file(file: FileSystemEntry.File) {
     tag(
         "file",
         attributes = listOfNotNull(
@@ -44,7 +37,7 @@ public fun XmlContentBuilder.file(file: FileSystemEntry.File) {
     }
 }
 
-public fun XmlContentBuilder.directory(directory: FileSystemEntry.Folder) {
+internal fun XmlContentBuilder.directory(directory: FileSystemEntry.Folder) {
     tag(
         "folder",
         attributes = listOfNotNull(
