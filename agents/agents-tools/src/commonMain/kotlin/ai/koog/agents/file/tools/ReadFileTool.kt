@@ -4,7 +4,7 @@ import ai.koog.agents.core.tools.*
 import ai.koog.agents.file.tools.model.FileSystemEntry
 import ai.koog.agents.file.tools.render.file
 import ai.koog.prompt.markdown.markdown
-import ai.koog.prompt.xml.xml
+import ai.koog.prompt.text.text
 import ai.koog.rag.base.files.FileMetadata
 import ai.koog.rag.base.files.FileSystemProvider
 import ai.koog.rag.base.files.readText
@@ -86,48 +86,19 @@ public class ReadFileTool<Path>(
 		)
 	}
 
-	/**
-	 * Contains the result of a file read operation with windowed content and metadata.
-	 *
-	 * The content includes only the lines specified by the windowing parameters from the original request.
-	 * If line windowing was applied, the content reflects only the requested slice of the file.
-	 * Metadata includes the original file path, total file size, and windowing information.
-	 *
-	 * @property file File entry containing both content and metadata.
-	 *                Access the text content via `file.content.text`.
-	 *                Access metadata via `file.metadata` (path, size, etc.).
-	 */
-	@Serializable
-	public data class Result(val file: FileSystemEntry.File) : ToolResult.JSONSerializable<Result> {
-		override fun getSerializer(): KSerializer<Result> = serializer()
-
-		/**
-		 * Formats the file result as compact XML.
-		 *
-		 * Generates XML containing file metadata (path, size, line counts) and content.
-		 * The output is compact (non-indented) for efficient transmission and storage.
-		 *
-		 * @return XML string with structured file information and content.
-		 */
-		public fun toXML(): String = xml(indented = false) { file(file) }
-
-		/**
-		 * Formats the file result as Markdown.
-		 *
-		 * Generates human-readable Markdown with file metadata in headers and content
-		 * in fenced code blocks. Suitable for documentation, logs, and display in
-		 * Markdown-aware interfaces.
-		 *
-		 * @return Markdown formatted string with file information and content.
-		 */
-		public fun toMarkdown(): String = markdown { file(file) }
-
-		/** Default string form (Markdown). */
-		override fun toStringDefault(): String = toMarkdown()
-
-		/** Same as `toStringDefault()` (Markdown). */
-		override fun toString(): String = toStringDefault()
-	}
+    /**
+     * Result containing windowed file content and metadata.
+     *
+     * Content includes only lines specified by windowing parameters from the request.
+     * Metadata includes original file path, total file size, and windowing information.
+     *
+     * @property fileEntry the file entry with content and metadata
+     */
+    @Serializable
+    public data class Result(val fileEntry: FileSystemEntry.File) : ToolResult.JSONSerializable<Result> {
+        override fun getSerializer(): KSerializer<Result> = serializer()
+        override fun toStringDefault(): String = text { file(fileEntry) }
+    }
 
 	/**
 	 * Parameters that specify which file to read and how to apply line windowing.

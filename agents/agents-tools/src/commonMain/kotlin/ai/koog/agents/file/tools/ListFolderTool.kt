@@ -6,7 +6,6 @@ import ai.koog.agents.file.tools.model.FileSystemEntry
 import ai.koog.agents.file.tools.render.directory
 import ai.koog.prompt.markdown.markdown
 import ai.koog.prompt.text.text
-import ai.koog.prompt.xml.xml
 import ai.koog.rag.base.files.FileMetadata
 import ai.koog.rag.base.files.FileSystemProvider
 import kotlinx.serialization.KSerializer
@@ -19,21 +18,7 @@ public class ListFolderTool<Path>(
     @Serializable
     public  data class Result(val root: FileSystemEntry.Folder) : ToolResult.JSONSerializable<Result> {
         override fun getSerializer(): KSerializer<Result> = serializer()
-
-        public fun toXML(): String = xml {
-            directory(root)
-        }
-
-        public  fun toMarkdown(): String = markdown {
-            directory(root)
-        }
-
-        public  fun toPlain(): String = text {
-            directory(root)
-        }
-
-        override fun toStringDefault(): String = toPlain()
-        override fun toString(): String = toStringDefault()
+        override fun toStringDefault(): String = text { directory(root) }
     }
 
     public companion object {

@@ -2,8 +2,9 @@ package ai.koog.agents.file.tools.render
 
 import ai.koog.agents.file.tools.model.FileSystemEntry
 import ai.koog.prompt.text.TextContentBuilder
+import ai.koog.rag.base.files.FileMetadata
 
-internal fun TextContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
+private fun TextContentBuilder.entry(entry: FileSystemEntry, parent: FileSystemEntry? = null) {
     when (entry) {
         is FileSystemEntry.File -> file(entry, parent)
         is FileSystemEntry.Folder -> directory(entry, parent)
@@ -20,7 +21,7 @@ internal fun TextContentBuilder.directory(directory: FileSystemEntry.Folder, par
 
     val displayPath = if (parent != null) {
         // Remove the root path prefix and show only the relative part
-        val relativePath = directory.path.removePrefix(parent.path).trimFilePathSeparator()
+        val relativePath = directory.path.removePrefix(parent.path).trimStart('/', '\\')
         relativePath.ifEmpty { parent }
     } else {
         // This is the root directory, show full path
@@ -56,14 +57,18 @@ private fun TextContentBuilder.codeblock(text: String) {
 internal fun TextContentBuilder.file(file: FileSystemEntry.File, parent: FileSystemEntry? = null) {
     val displayPath = if (parent != null) {
         // Remove the root path prefix and show only the relative part
-        val relativePath = file.path.removePrefix(parent.path).trimFilePathSeparator()
+        val relativePath = file.path.removePrefix(parent.path).trimStart('/', '\\')
         relativePath.ifEmpty { file.name }
     } else {
         // This is the root level, show full path
         file.path
     }
-    
-    val meta = buildFileMetadata(file)
+
+    val meta = buildList {
+        if (file.contentType != FileMetadata.FileContentType.Text) add(file.contentType.display)
+        add(file.size.joinToString(", ") { it.display() })
+        if (file.hidden) add("hidden")
+    }
     +"$displayPath (${meta.joinToString(", ")})"
     when (val content = file.content) {
         is FileSystemEntry.File.Content.Excerpt -> {
