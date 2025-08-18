@@ -4,18 +4,16 @@ import ai.koog.agents.core.tools.DirectToolCallsEnabler
 import ai.koog.agents.core.tools.annotations.InternalAgentToolsApi
 import ai.koog.agents.file.tools.model.FileSystemEntry
 import ai.koog.rag.base.files.JVMFileSystemProvider
-import kotlinx.coroutines.test.runTest
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlinx.coroutines.test.runTest
 
-@OptIn(InternalAgentToolsApi::class)
-object Enabler : DirectToolCallsEnabler
+@OptIn(InternalAgentToolsApi::class) object Enabler : DirectToolCallsEnabler
 
 @OptIn(InternalAgentToolsApi::class)
 class ReadFileToolTest {
@@ -39,7 +37,7 @@ class ReadFileToolTest {
         val tool = ReadFileTool(fs)
 
         val result = tool.execute(ReadFileTool.Args(path = file.toString()), Enabler)
-        val fileEntry = result.file
+        val fileEntry = result.fileEntry
         val textContent = assertIs<FileSystemEntry.File.Content.Text>(fileEntry.content)
         assertEquals(content.joinToString("\n"), textContent.text)
     }
@@ -54,8 +52,12 @@ class ReadFileToolTest {
         val fs = JVMFileSystemProvider.ReadOnly
         val tool = ReadFileTool(fs)
 
-        val result = tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = 2, takeLines = 3), Enabler)
-        val fileEntry = result.file
+        val result =
+            tool.execute(
+                ReadFileTool.Args(path = file.toString(), skipLines = 2, takeLines = 3),
+                Enabler,
+            )
+        val fileEntry = result.fileEntry
         val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(fileEntry.content)
         assertEquals(1, excerpt.snippets.size)
         assertEquals(listOf("L3", "L4", "L5").joinToString("\n"), excerpt.snippets.first().text)
@@ -71,14 +73,18 @@ class ReadFileToolTest {
         val fs = JVMFileSystemProvider.ReadOnly
         val tool = ReadFileTool(fs)
 
-        val result = tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = 8, takeLines = -1), Enabler)
-        val fileEntry = result.file
+        val result =
+            tool.execute(
+                ReadFileTool.Args(path = file.toString(), skipLines = 8, takeLines = -1),
+                Enabler,
+            )
+        val fileEntry = result.fileEntry
         val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(fileEntry.content)
         assertEquals(1, excerpt.snippets.size)
         assertEquals(listOf("L9", "L10").joinToString("\n"), excerpt.snippets.first().text)
     }
 
-    // Fails with validation error when the target file path does not exist.
+    // Fails with a validation error when the target file path does not exist.
     @Test
     fun `non-existent path throws`() = runTest {
         val dir = tempDir()
@@ -91,11 +97,15 @@ class ReadFileToolTest {
             tool.execute(ReadFileTool.Args(path = missing.toString()), Enabler)
             fail("Expected IllegalArgumentException for missing file")
         } catch (e: ai.koog.agents.core.tools.ToolException.ValidationFailure) {
-            assertTrue(e.message.startsWith("File does not exist:") == true, "Unexpected message: ${e.message}")
+            assertEquals(
+                e.message.startsWith("File does not exist:"),
+                true,
+                "Unexpected message: ${e.message}",
+            )
         }
     }
 
-    // Fails with validation error when given a directory path instead of a file.
+    // Fails with a validation error when given a directory path instead of a file.
     @Test
     fun `directory path throws`() = runTest {
         val dir = tempDir()
@@ -107,13 +117,13 @@ class ReadFileToolTest {
             tool.execute(ReadFileTool.Args(path = dir.toString()), Enabler)
             fail("Expected IllegalArgumentException for directory path")
         } catch (e: ai.koog.agents.core.tools.ToolException.ValidationFailure) {
-            assertTrue(
-                e.message.startsWith("Path must point to a file, not a directory:") == true,
-                "Unexpected message: ${e.message}"
+            assertEquals(
+                e.message.startsWith("Path must point to a file, not a directory:"),
+                true,
+                "Unexpected message: ${e.message}",
             )
         }
     }
-
 
     // Empty file with default params returns empty Text content.
     @Test
@@ -125,7 +135,7 @@ class ReadFileToolTest {
         val tool = ReadFileTool(fs)
 
         val result = tool.execute(ReadFileTool.Args(path = file.toString()), Enabler)
-        val fileEntry = result.file
+        val fileEntry = result.fileEntry
         val textContent = assertIs<FileSystemEntry.File.Content.Text>(fileEntry.content)
         assertEquals("", textContent.text, "Empty file should yield empty Text content")
     }
@@ -140,11 +150,19 @@ class ReadFileToolTest {
         val fs = JVMFileSystemProvider.ReadOnly
         val tool = ReadFileTool(fs)
 
-        val result = tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = 10, takeLines = 300), Enabler)
-        val fileEntry = result.file
+        val result =
+            tool.execute(
+                ReadFileTool.Args(path = file.toString(), skipLines = 10, takeLines = 300),
+                Enabler,
+            )
+        val fileEntry = result.fileEntry
         val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(fileEntry.content)
         assertEquals(1, excerpt.snippets.size)
-        assertEquals("", excerpt.snippets.first().text, "Excessive skip should produce empty snippet text")
+        assertEquals(
+            "",
+            excerpt.snippets.first().text,
+            "Excessive skip should produce empty snippet text",
+        )
     }
 
     @Test
@@ -155,11 +173,19 @@ class ReadFileToolTest {
         val fs = JVMFileSystemProvider.ReadOnly
         val tool = ReadFileTool(fs)
 
-        val result = tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = 0, takeLines = 0), Enabler)
-        val fileEntry = result.file
+        val result =
+            tool.execute(
+                ReadFileTool.Args(path = file.toString(), skipLines = 0, takeLines = 0),
+                Enabler,
+            )
+        val fileEntry = result.fileEntry
         val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(fileEntry.content)
         assertEquals(1, excerpt.snippets.size)
-        assertEquals("", excerpt.snippets.first().text, "Zero takeLines should produce empty snippet text")
+        assertEquals(
+            "",
+            excerpt.snippets.first().text,
+            "Zero takeLines should produce empty snippet text",
+        )
     }
 
     // Validation: negative skipLines should throw a validation error.
@@ -175,7 +201,11 @@ class ReadFileToolTest {
             tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = -1), Enabler)
             fail("Expected validation failure for negative skipLines")
         } catch (e: ai.koog.agents.core.tools.ToolException.ValidationFailure) {
-            assertTrue(e.message.startsWith("skipLines must be >= 0:") == true, "Unexpected message: ${e.message}")
+            assertEquals(
+                e.message.startsWith("skipLines must be >= 0:"),
+                true,
+                "Unexpected message: ${e.message}",
+            )
         }
     }
 
@@ -192,7 +222,11 @@ class ReadFileToolTest {
             tool.execute(ReadFileTool.Args(path = file.toString(), takeLines = -2), Enabler)
             fail("Expected validation failure for takeLines < -1")
         } catch (e: ai.koog.agents.core.tools.ToolException.ValidationFailure) {
-            assertTrue(e.message.startsWith("takeLines must be >= -1:") == true, "Unexpected message: ${e.message}")
+            assertEquals(
+                e.message.startsWith("takeLines must be >= -1:"),
+                true,
+                "Unexpected message: ${e.message}",
+            )
         }
     }
 
@@ -207,7 +241,7 @@ class ReadFileToolTest {
         val tool = ReadFileTool(fs)
 
         val result = tool.execute(ReadFileTool.Args(path = file.toString()), Enabler)
-        val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(result.file.content)
+        val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(result.fileEntry.content)
         assertEquals(1, excerpt.snippets.size)
         val snippetText = excerpt.snippets.first().text
         val snippetLines = snippetText.lines()
@@ -226,12 +260,17 @@ class ReadFileToolTest {
         val fs = JVMFileSystemProvider.ReadOnly
         val tool = ReadFileTool(fs)
 
-        val result = tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = 0, takeLines = -1), Enabler)
-        val textContent = assertIs<FileSystemEntry.File.Content.Text>(result.file.content)
+        val result =
+            tool.execute(
+                ReadFileTool.Args(path = file.toString(), skipLines = 0, takeLines = -1),
+                Enabler,
+            )
+        val textContent = assertIs<FileSystemEntry.File.Content.Text>(result.fileEntry.content)
         assertEquals(lines.joinToString("\n"), textContent.text)
     }
 
-    // Excerpt range metadata should match skip and take (start.line == skip, end.line == skip + take).
+    // Excerpt range metadata should match skip and take (start.line == skip, end.line == skip +
+    // take).
     @Test
     fun `excerpt range lines match skip and take`() = runTest {
         val dir = tempDir()
@@ -243,8 +282,12 @@ class ReadFileToolTest {
 
         val skip = 2
         val take = 3
-        val result = tool.execute(ReadFileTool.Args(path = file.toString(), skipLines = skip, takeLines = take), Enabler)
-        val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(result.file.content)
+        val result =
+            tool.execute(
+                ReadFileTool.Args(path = file.toString(), skipLines = skip, takeLines = take),
+                Enabler,
+            )
+        val excerpt = assertIs<FileSystemEntry.File.Content.Excerpt>(result.fileEntry.content)
         val snippet = excerpt.snippets.first()
         assertEquals(skip, snippet.range.start.line)
         assertEquals(skip + take, snippet.range.end.line)
