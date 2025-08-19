@@ -5,44 +5,37 @@ import kotlin.math.pow
 import kotlinx.serialization.Serializable
 
 /**
- * Represents human-readable file size information in different formats.
+ * Human-readable file size information.
  *
- * This sealed interface provides multiple ways to represent a file's size or length:
- * - [Bytes] shows file size in bytes, kilobytes, or megabytes
- * - [Lines] shows file size as a count of text lines
+ * Provides two representations:
+ * - [Bytes] — file size in bytes, kibibytes, or mebibyte
+ * - [Lines] — file size as a count of text lines
  *
- * Use the companion object's [of] method to create appropriate instances for a file.
+ * Use [of] to create the appropriate instances for a file.
  */
 @Serializable
 public sealed interface FileSize {
-    /**
-     * Returns a formatted string representation of the file size.
-     *
-     * @return a human-readable size string suitable for display
-     */
+    /** Returns a formatted string representation of the file size. */
     public fun display(): String
 
-    /** Provides utility methods and constants for creating and working with file sizes. */
+    /** Utility methods and constants for file size handling. */
     public companion object {
-        /** Constant representing exactly 1 kilobyte (1024 bytes). */
-        public const val KB: Long = 1024L
+        /** 1 kibibyte = 1024 bytes. */
+        public const val KIB: Long = 1024L
 
-        /** Constant representing exactly 1 megabyte (1024 * 1024 bytes). */
-        public const val MB: Long = KB * 1024L
+        /** 1 mebibyte = 1024 × 1024 bytes. */
+        public const val MIB: Long = KIB * 1024L
 
         /**
-         * Creates FileSize representations for a file at the given path.
+         * Creates [FileSize] representations for the given file.
          *
-         * This method always returns a list containing at least a [Bytes] instance. For files
-         * smaller than or equal to 1MB, it also includes a [Lines] instance. For files larger than
-         * 1MB, only the [Bytes] instance is returned to avoid reading large content into memory.
+         * Always returns a [Bytes] instance. For files ≤ 1 MiB, also returns a [Lines] instance.
+         * For files > 1 MiB, only [Bytes] is returned to avoid loading large content.
          *
-         * @param Path the type parameter representing the filesystem path type
-         * @param path the path to the file to measure
+         * @param Path the filesystem path type
+         * @param path the file path to measure
          * @param fs the filesystem provider used to access the file
-         * @return a list containing:
-         *     - Always a [Bytes] instance representing the file size in bytes
-         *     - For files <= 1MB, also a [Lines] instance representing the line count
+         * @return a list containing at least a [Bytes] instance, and optionally a [Lines] instance
          */
         public suspend fun <Path> of(
             path: Path,
@@ -50,7 +43,7 @@ public sealed interface FileSize {
         ): List<FileSize> {
             val bytes = Bytes(fs.size(path))
 
-            return if (bytes.bytes > MB) {
+            return if (bytes.bytes > MIB) {
                 listOf(bytes)
             } else {
                 val content = fs.readBytes(path).decodeToString()
@@ -60,76 +53,58 @@ public sealed interface FileSize {
         }
 
         /**
-         * Extension function to format a Double value with a fixed number of decimal places.
+         * Formats a [Double] with exactly [decimals] decimal places.
          *
-         * This method ensures trailing zeros are preserved after the decimal point. For example,
-         * formatting 1.0 with 2 decimal places will produce "1.00". This is particularly important
-         * for JavaScript targets where numbers are IEEE 754 doubles and trailing zeros would
-         * otherwise be lost.
+         * Preserves trailing zeros (e.g. `1.0` with 2 decimals → `1.00`).
          *
-         * @param decimals the number of decimal places to include (must be non-negative)
-         * @return a string representation of the number with exactly [decimals] digits after the
-         *   decimal point
-         * @receiver the Double value to format
+         * @param decimals number of decimal places (≥ 0)
+         * @receiver the value to format
+         * @return a string with exactly [decimals] digits after the decimal point
          */
         private fun Double.formatDecimals(decimals: Int): String {
-            val roundedToDecimals = ((this * 10.0.pow(decimals)).toLong() / 10.0.pow(decimals))
-            if (roundedToDecimals == roundedToDecimals.toInt().toDouble())
+            val roundedToDecimals =
+                kotlin.math.round(this * 10.0.pow(decimals)) / 10.0.pow(decimals)
+            if (roundedToDecimals == roundedToDecimals.toInt().toDouble()) {
                 return "${roundedToDecimals.toInt()}.${"0".repeat(decimals)}"
+            }
             return "$roundedToDecimals"
         }
     }
 
     /**
-     * Represents a file's size in bytes with automatic unit selection for display.
+     * A file’s size in bytes with automatic unit selection for display.
      *
-     * This implementation stores the raw byte count and provides a formatted display string using
-     * appropriate units (bytes, KB, or MB) depending on the size.
-     *
-     * @property bytes the exact size in bytes (always non-negative)
+     * @property bytes exact size in bytes (non-negative)
      */
     @Serializable
     public data class Bytes(val bytes: Long) : FileSize {
         /**
-         * Formats the byte count as a human-readable string with appropriate units.
+         * Formats the byte count as a human-readable string.
          *
-         * The format varies based on the byte count:
-         * - 0 bytes → "0 bytes"
-         * - Size ≥ 1MB → Value in MB with one decimal place (e.g., "1.2 mb")
-         * - Size < 0.1KB → "<0.1 KB" (shown instead of very small KB values)
-         * - All other sizes → Value in KB with one decimal place (e.g., "12.3 kb")
-         *
-         * @return a formatted string with units (bytes, kb, or mb)
+         * Rules:
+         * - `0` → `"0 bytes"`
+         * - ≥ 1 MiB → value in MiB with one decimal place
+         * - < 0.1 KiB → `"<0.1 KiB"`
+         * - Otherwise → value in KiB with one decimal place
          */
         override fun display(): String {
             return when {
                 bytes == 0L -> "0 bytes"
-                bytes >= MB -> "${(bytes.toDouble() / MB).formatDecimals(1)} mb"
-                bytes.toDouble() / KB < 0.1 -> "<0.1 KB"
-                else -> "${(bytes.toDouble() / KB).formatDecimals(1)} kb"
+                bytes >= MIB -> "${(bytes.toDouble() / MIB).formatDecimals(1)} MiB"
+                bytes.toDouble() / KIB < 0.1 -> "<0.1 KiB"
+                else -> "${(bytes.toDouble() / KIB).formatDecimals(1)} KiB"
             }
         }
     }
 
     /**
-     * Represents a file's size as a count of text lines.
+     * A file’s size expressed as line count.
      *
-     * This implementation is typically used for text files where line count is more meaningful than
-     * byte size for understanding content length.
-     *
-     * @property lines the number of lines in the file (always non-negative)
+     * @property lines number of lines (non-negative)
      */
     @Serializable
     public data class Lines(val lines: Int) : FileSize {
-        /**
-         * Returns the line count as a formatted string.
-         *
-         * Simply appends "lines" to the integer count.
-         *
-         * @return a string in the format "{lines} lines"
-         */
-        override fun display(): String {
-            return "$lines lines"
-        }
+        /** Returns the line count as `"N lines"`. */
+        override fun display(): String = "$lines lines"
     }
 }
